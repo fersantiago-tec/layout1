@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layout</title>
+    <style>
+        :root {
+            --bg-dark: #111827;
+            --panel-bg: #1f2937;
+            --text-main: #f3f4f6;
+            --accent: #3b82f6;
+            
+            /* Colores ABC */
+            --color-a: #22c55e; /* Verde */
+            --color-b: #eab308; /* Amarillo */
+            --color-c: #ef4444; /* Rojo */
+            
+            --floor: #e5e7eb;
+            --office-bg: #3b82f6;
+            --office-text: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 { font-size: 24px; color: var(--accent); margin-bottom: 5px; }
+        p.subtitle { color: #9ca3af; font-size: 14px; margin-bottom: 25px; }
+
+        .main-container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* --- EL PLANO --- */
+        .blueprint-container {
+            position: relative;
+            width: 600px; 
+            height: 600px;
+            background-color: #333;
+            border: 4px solid #4b5563;
+            display: flex;
+            flex-direction: column; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        /* ALMACÉN (Arriba 75% = 15m) */
+        .warehouse-zone {
+            width: 100%;
+            height: 75%;
+            background-color: var(--floor);
+            position: relative;
+            display: flex;
+            padding: 20px; /* Margen muros */
+            box-sizing: border-box;
+        }
+
+        /* GRID FÍSICO REALISTA (24 Racks) */
+        /* Ancho 20m: Caben 4 racks de 4m (16m ocupados + 4m maniobra lateral).
+           Alto 15m: Caben 6 filas de racks (Alternando pasillo y rack).
+           Total: 4 cols x 6 rows = 24 huecos.
+        */
+        .racks-area {
+            width: 80%; /* Dejamos 20% a la izquierda para el portón/maniobra */
+            height: 100%;
+            margin-left: auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 Racks de largo */
+            grid-template-rows: repeat(6, 1fr);    /* 6 Filas de racks */
+            gap: 10px; /* Pasillos simulados entre bloques */
+            row-gap: 15px; /* Pasillos de montacargas más anchos */
+        }
+
+        /* RACK UNIT (Representa 4m x 1.2m) */
+        .rack-unit {
+            border-radius: 2px;
+            background-color: #d1d5db;
+            border: 1px dashed #9ca3af;
+            opacity: 0.15;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #374151;
+            font-weight: bold;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        /* Rack Activo */
+        .rack-unit.active {
+            opacity: 1;
+            border: 1px solid rgba(0,0,0,0.4);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            color: #fff;
+            text-shadow: 0px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        /* Indicador de Niveles (Barras) */
+        .level-bar-container {
+            display: flex;
+            gap: 2px;
+            margin-top: 4px;
+            height: 6px;
+            width: 80%;
+        }
+        .lvl-pip {
+            flex: 1;
+            background: rgba(255,255,255,0.3);
+            border-radius: 1px;
+        }
+        .lvl-pip.on { background: #fff; box-shadow: 0 0 2px #fff; }
+
+        /* Colores Zona */
+        .type-a { background-color: var(--color-a) !important; }
+        .type-b { background-color: var(--color-b) !important; }
+        .type-c { background-color: var(--color-c) !important; }
+
+        /* PORTÓN */
+        .gate {
+            position: absolute;
+            left: -4px;
+            top: 40px;
+            width: 8px;
+            height: 80px;
+            background-color: #f59e0b;
+            border: 1px solid #78350f;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .gate-label {
+            position: absolute;
+            left: 15px;
+            background: rgba(255,255,255,0.9);
+            color: #d97706;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        /* OFICINAS */
+        .office-zone {
+            width: 100%;
+            height: 25%;
+            background-color: var(--office-bg);
+            border-top: 4px solid #1e3a8a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--office-text);
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        /* CONTROLES */
+        .controls {
+            background-color: var(--panel-bg);
+            padding: 25px;
+            border-radius: 10px;
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        input[type=range] { width: 100%; margin: 15px 0; cursor: pointer; }
+        .kpi-card { background: #111827; padding: 15px; border-radius: 8px; text-align: center; }
+        .big-number { font-size: 36px; font-weight: bold; color: #fff; }
+        
+        .legend-row { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; }
+        .dot { width: 12px; height: 12px; border-radius: 2px; }
+
+    </style>
+</head>
+<body>
+
+    <h1>Layout Físico</h1>
+    <p class="subtitle"></p>
+
+    <div class="main-container">
+        
+        <!-- PLANO -->
+        <div class="blueprint-container">
+            <div class="warehouse-zone">
+                <div class="gate">
+                    <div class="gate-label">PORTÓN</div>
+                </div>
+                <!-- Grid de 24 posiciones reales -->
+                <div class="racks-area" id="grid"></div>
+            </div>
+            <div class="office-zone">
+                OFICINAS (20m x 5m)
+            </div>
+        </div>
+
+        <!-- PANEL -->
+        <div class="controls">
+            <div>
+                <label style="color:var(--accent); font-weight:bold;">Año de Operación:</label>
+                <input type="range" id="yearSlider" min="1" max="4" step="1" value="1">
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:#9ca3af;">
+                    <span>Año 1</span><span>Año 2</span><span>Año 3</span><span>Año 4</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div id="yearText" style="color:var(--accent); font-weight:bold; margin-bottom:5px;">AÑO 1</div>
+                <div class="big-number" id="capacityCount">8</div>
+                <div style="font-size:12px; color:#9ca3af;">Capacidad (Equiv. Racks)</div>
+                <div id="statusText" style="font-size:11px; color:#22c55e; margin-top:5px; font-weight:bold;"></div>
+            </div>
+
+            <div style="border-top:1px solid #374151; padding-top:15px;">
+                <p style="font-size:12px; color:#9ca3af; margin-bottom:10px;">ZONIFICACIÓN ABC</p>
+                <div class="legend-row">
+                    <div class="dot" style="background:var(--color-a)"></div>
+                    <span>Zona A (Alta Rotación)</span>
+                </div>
+                <div class="legend-row">
+                    <div class="dot" style="background:var(--color-b)"></div>
+                    <span>Zona B (Media)</span>
+                </div>
+                <div class="legend-row">
+                    <div class="dot" style="background:var(--color-c)"></div>
+                    <span>Zona C (Baja)</span>
+                </div>
+            </div>
+            
+           
+        </div>
+
+    </div>
+
+    <script>
+        const grid = document.getElementById('grid');
+        const slider = document.getElementById('yearSlider');
+        const countDisplay = document.getElementById('capacityCount');
+        const yearDisplay = document.getElementById('yearText');
+        const statusDisplay = document.getElementById('statusText');
+
+        // RESTRICCIÓN FÍSICA REAL
+        // En 20x15m con racks de 4x1.2m y pasillos, solo caben ~24 huellas.
+        const PHYSICAL_SLOTS = 24; 
+        
+        // Plan de Crecimiento (Unidades Equivalentes requeridas)
+        const demand = {
+            1: 8,
+            2: 15,
+            3: 30,  // Supera los 24 físicos -> Necesitamos altura
+            4: 61   // Supera por mucho -> Necesitamos mucha altura
+        };
+
+        let slots = [];
+
+        function initGrid() {
+            grid.innerHTML = '';
+            // Crear exactamente 24 huecos físicos
+            for (let i = 0; i < PHYSICAL_SLOTS; i++) {
+                let div = document.createElement('div');
+                div.classList.add('rack-unit');
+                div.id = `slot-${i}`;
+                
+                // Asignar Zona ABC (Izquierda A -> Derecha C)
+                // Columna 0 (Izquierda/Portón) -> A
+                // Columna 1 -> B
+                // Columnas 2,3 -> C
+                let col = i % 4; // Tenemos 4 columnas en el grid CSS
+                let zone = 'C';
+                if(col === 0) zone = 'A';
+                else if(col === 1) zone = 'B';
+                
+                div.dataset.zone = zone;
+                
+                // Estructura interna
+                div.innerHTML = `
+                    <span class="lvl-text"></span>
+                    <div class="level-bar-container">
+                        <div class="lvl-pip"></div>
+                        <div class="lvl-pip"></div>
+                        <div class="lvl-pip"></div>
+                        <div class="lvl-pip"></div>
+                        <div class="lvl-pip"></div>
+                    </div>
+                `;
+
+                grid.appendChild(div);
+                slots.push(div);
+            }
+        }
+
+        function update(year) {
+            let target = demand[year];
+            yearDisplay.innerText = `AÑO ${year}`;
+            countDisplay.innerText = target;
+
+            // Reset
+            slots.forEach(s => {
+                s.className = 'rack-unit';
+                s.querySelector('.lvl-text').innerText = "";
+                s.querySelectorAll('.lvl-pip').forEach(p => p.classList.remove('on'));
+                s.dataset.levels = 0;
+            });
+
+            // Lógica de Distribución
+            // 1. Llenar Nivel 1 de los 24 slots (Prioridad ABC).
+            // 2. Si sobran, Llenar Nivel 2...
+            
+            // Ordenar por prioridad: A -> B -> C
+            const zoneA = slots.filter(s => s.dataset.zone === 'A');
+            const zoneB = slots.filter(s => s.dataset.zone === 'B');
+            const zoneC = slots.filter(s => s.dataset.zone === 'C');
+            const priorityList = [...zoneA, ...zoneB, ...zoneC];
+
+            let remaining = target;
+            let currentPass = 1;
+            const maxPass = 5;
+
+            while(remaining > 0 && currentPass <= maxPass) {
+                for(let i=0; i<priorityList.length; i++) {
+                    if(remaining > 0) {
+                        let rack = priorityList[i];
+                        let lvl = parseInt(rack.dataset.levels) + 1;
+                        rack.dataset.levels = lvl;
+                        remaining--;
+                    }
+                }
+                currentPass++;
+            }
+
+            // Renderizar
+            priorityList.forEach(el => {
+                let lvl = parseInt(el.dataset.levels);
+                if(lvl > 0) {
+                    el.classList.add('active');
+                    
+                    // Color
+                    if(el.dataset.zone === 'A') el.classList.add('type-a');
+                    if(el.dataset.zone === 'B') el.classList.add('type-b');
+                    if(el.dataset.zone === 'C') el.classList.add('type-c');
+
+                    // Texto y Barritas
+                    el.querySelector('.lvl-text').innerText = `L${lvl}`;
+                    let pips = el.querySelectorAll('.lvl-pip');
+                    for(let k=0; k<lvl; k++) {
+                        if(pips[k]) pips[k].classList.add('on');
+                    }
+                }
+            });
+        }
+
+        slider.addEventListener('input', (e) => update(e.target.value));
+
+        initGrid();
+        update(1);
+
+    </script>
+</body>
+</html>
